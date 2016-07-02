@@ -15,6 +15,10 @@ SAVE_LOCATION = config.get('volatility', 'project_save_location')
 # Verify the Volatility Path - Add to config.ini
 # Add volatility path to the options that can be setup
 
+# Break-out the directories into stages of the checklist
+# Integrate foremost into the tool...
+# Integrate MFT analysis into the tool...
+
 vPATH = "/usr/bin/vol.py"  # Volatility PATH
 
 def pluginExec(c):
@@ -117,10 +121,15 @@ class volInteractive(cmd.Cmd):
 			pluginExec(command)
 		elif command == "malfind":
 			pluginExec(command)
+		elif command == "clamscan":
+			commandStr = "clamscan output/ --log=output/clamscan.txt --quiet"
+			print "Executing: " + commandStr
+			subprocess.Popen([commandStr], shell=True)
 		elif command == "sockets" or command == "sockscan" or command == "svcscan":
 			pluginExec(command)
 		else:
 			print "use autoruns - Searches the registry and memory space for applications running at system startup and maps them to running processes"
+			print "use clamscan - Executes a recursive scan on the output folder"
 			print "use cmdscan - Extract command history by scanning for _COMMAND_HISTORY"
 			print "use connections - Print list of open connections [Windows XP and 2003 Only]"
 			print "use connscan - Pool scanner for tcp connections"
@@ -176,6 +185,13 @@ class volInteractive(cmd.Cmd):
 			systemCmd = "grep -i " + command + " output/*.txt"
 			os.system(systemCmd)
 		print
+		return	
+
+	def do_clamscan(self, command):
+		"""Run a recursive clamscan on files in the output directory"""
+		commandStr = "clamscan output/ --log=output/clamscan.txt --quiet"
+		print "Executing: " + commandStr
+		subprocess.Popen([commandStr], shell=True)
 		return	
 
 	def do_note(self, command):
@@ -261,7 +277,112 @@ class volInteractive(cmd.Cmd):
 			print "[X] cmdline - Display command-line args for each process"
 		else:
 			print "[ ] cmdline - Display command-line args for each process"
+		if os.path.exists("output/cmdscan.txt"):
+			print "[X] cmdscan - Extract command history by scanning for _COMMAND_HISTORY"
+		else:
+			print "[ ] cmdscan - Extract command history by scanning for _COMMAND_HISTORY"
+		if os.path.exists("output/getsids.txt"):
+			print "[X] getsids - Print process security identifiers"
+		else:
+			print "[ ] getsids - Print process security identifiers"
+		if os.path.exists("output/handles.txt"):
+			print "[X] handles - List of open handles for each process"
+		else:
+			print "[ ] handles - List of open handles for each process"
+		if os.path.exists("output/filescan.txt"):
+			print "[X] filescan - Scan memory for FILE_OBJECT handles"
+		else:
+			print "[ ] filescan - Scan memory for FILE_OBJECT handles"
+		if os.path.exists("output/svcscan.txt"):
+			print "[X] svcscan - Scan for Windows Service Information"
+		else:
+			print "[ ] svcscan - Scan for Windows Service Information"
+		if os.path.exists("output/autoruns.txt"):
+			print "[X] autoruns - Searches the registry and memory locations running at system startup and maps them to running processes"
+		else:
+			print "[ ] autoruns - Searches the registry and memory locations running at system startup and maps them to running processes"
+		### Stage 3
+		print 
+		print "Stage 3: Review Network Artifacts"
+		if os.path.exists("output/connections.txt"):
+			print "[X] connections - List of Open TCP Connections [XP]"
+		else:
+			print "[ ] connections - List of Open TCP Connections [XP]"
+		if os.path.exists("output/connscan.txt"):
+			print "[X] connscan - TCP Connections including closed [XP]"
+		else:
+			print "[ ] connscan - TCP Connections including closed [XP]"
+		if os.path.exists("output/sockets.txt"):
+			print "[X] sockets - Print Listening Sockets (any protocol)"
+		else:
+			print "[ ] sockets - Print Listening Sockets (any protocol)"
+		if os.path.exists("output/sockscan.txt"):
+			print "[X] sockscan - ID sockets, including closed and unlinked"
+		else:
+			print "[ ] sockscan - ID sockets, including closed and unlinked"
+		if os.path.exists("output/netscan.txt"):
+			print "[X] netscan - Scan for connections and sockets"
+		else:
+			print "[ ] netscan - Scan for connections and sockets"
+		### Stage 4
+		print
+		print "Stage 4: Look for Evidence of Code Injection"
+		if os.path.exists("output/malfind.txt"):
+			print "[X] malfind - Find injected code and dump sections"
+		else:
+			print "[ ] malfind - Find injected code and dump sections"
+		if os.path.exists("output/ldrmodules.txt"):
+			print "[X] ldrmodules - Detect unlinked DLLs"
+		else:
+			print "[ ] ldrmodules - Detect unlinked DLLs"
+		### Stage 5
+		print
+		print "Stage 5: Check for Signs of a Rootkit"
+		if os.path.exists("output/psxview.txt"):
+			print "[X] psxview - Find hidden processes using cross-view"
+		else:
+			print "[ ] psxview - Find hidden processes using cross-view"
+		if os.path.exists("output/modscan.txt"):
+			print "[X] modscan - Scan memory for loaded, unloaded and unlinked drivers"
+		else:
+			print "[ ] modscan - Scan memory for loaded, unloaded and unlinked drivers"
+		if os.path.exists("output/apihooks.txt"):
+			print "[X] apihooks - Find API/DLL function hooks"
+		else:
+			print "[ ] apihooks - Find API/DLL function hooks"
+		if os.path.exists("output/ssdt.txt"):
+			print "[X] ssdt - Hooks in System Service Descriptor Table"
+		else:
+			print "[ ] ssdt - Hooks in System Service Descriptor Table"
+		if os.path.exists("output/driverirp.txt"):
+			print "[X] driverirp - Identify I/O Request Packet Hooks"
+		else:
+			print "[ ] driverirp - Identify I/O Request Packet Hooks"
+		if os.path.exists("output/idt.txt"):
+			print "[X] idt - Display Interrupt Descriptor Table"
+		else:
+			print "[ ] idt - Display Interrupt Descriptor Table"
+		### Stage 6
+		print
+		print "Stage 6: Dump Suspicious Processes and Drivers"
+		if os.path.exists("output/dlldump.txt"):
+			print "[X] dlldump - Extract DLLs from Specific Processes"
+		else:
+			print "[ ] dlldump - Extract DLLs from Specific Processes"
+		if os.path.exists("output/moddump.txt"):
+			print "[X] moddump - Extract Kernel Drivers"
+		else:
+			print "[ ] moddump - Extract Kernel Drivers"
+		if os.path.exists("output/procmemdump.txt"):
+			print "[X] procmemdump - Dump process to executable sample"
+		else:
+			print "[ ] procmemdump - Dump process to executable sample"
+		if os.path.exists("output/memdump.txt"):
+			print "[X] memdump - Dump every memory section into a file"
+		else:
+			print "[ ] memdump - Dump every memory section into a file"
 		return
+
 
 	def emptyline(self):
 		pass
